@@ -1,0 +1,122 @@
+{
+  "name": "Autonomous Business-in-a-Box MVP",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "1",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "text": "Generate a catchy product title, description, and one-line marketing caption for the product idea: {{$json[\"productIdea\"]}}. Return output in JSON with keys: title, description, caption."
+      },
+      "id": "2",
+      "name": "OpenAI - Product Content",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1,
+      "position": [650, 300],
+      "credentials": {
+        "openAiApi": "YOUR_OPENAI_API_KEY"
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "sheetId": "YOUR_SHEET_ID",
+        "range": "Products!A:C",
+        "options": {},
+        "fields": {
+          "values": [
+            "={{$json[\"title\"]}}",
+            "={{$json[\"description\"]}}",
+            "={{$json[\"caption\"]}}"
+          ]
+        }
+      },
+      "id": "3",
+      "name": "Google Sheets - Add Product",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 2,
+      "position": [950, 200],
+      "credentials": {
+        "googleApi": "YOUR_GOOGLE_API_CREDENTIALS"
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "YOUR_TELEGRAM_CHAT_ID",
+        "text": "🔥 {{$json[\"title\"]}}\n\n{{$json[\"description\"]}}\n\n👉 {{$json[\"caption\"]}}",
+        "additionalFields": {}
+      },
+      "id": "4",
+      "name": "Telegram - Post Ad",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [950, 400],
+      "credentials": {
+        "telegramApi": "YOUR_TELEGRAM_BOT_TOKEN"
+      }
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "productIdea",
+              "value": "eco-friendly bamboo water bottle"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "5",
+      "name": "Set Product Idea",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [450, 300]
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Set Product Idea",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Product Idea": {
+      "main": [
+        [
+          {
+            "node": "OpenAI - Product Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI - Product Content": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets - Add Product",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Telegram - Post Ad",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
